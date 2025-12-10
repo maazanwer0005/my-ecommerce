@@ -7,6 +7,9 @@ import { Star, ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, ArrowLeft 
 import { products } from "@/components/data/products";
 import { useCart } from "@/context/CartContext";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function ProductDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -16,7 +19,7 @@ export default function ProductDetailPage() {
     const [activeTab, setActiveTab] = useState("description");
 
     // Find product by ID
-    const product = products.find((p) => p.id.toString() === params.id);
+    const product = products.find((p) => p.id.toString() === params?.id);
 
     if (!product) {
         return (

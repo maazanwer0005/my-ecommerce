@@ -189,3 +189,5 @@ export function AdminServicesPage() {
     </AdminLayout>
   );
 }
+
+export default AdminServicesPage;

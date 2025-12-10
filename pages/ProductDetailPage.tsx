@@ -6,11 +6,17 @@ import { useParams, useRouter } from "next/navigation";
 import { Star, ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, ArrowLeft } from "lucide-react";
 
 export function ProductDetailPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string | undefined;
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
+
+  // Handle case when id is not available during SSR
+  if (!id) {
+    return null;
+  }
 
   // Mock product data
   const product = {
@@ -363,3 +369,5 @@ export function ProductDetailPage() {
     </div>
   );
 }
+
+export default ProductDetailPage;

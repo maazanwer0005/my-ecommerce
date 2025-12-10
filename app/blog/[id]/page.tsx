@@ -12,7 +12,7 @@ export default function BlogPostDetail() {
 
     // Combine all posts to search
     const allPosts = [featuredPost, ...blogPosts];
-    const post = allPosts.find((p) => p.id.toString() === params.id);
+    const post = allPosts.find((p) => p.id.toString() === params?.id);
 
     if (!post) {
         return (

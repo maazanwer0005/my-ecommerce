@@ -258,3 +258,5 @@ export function ProjectsPage() {
     </div>
   );
 }
+
+export default ProjectsPage;

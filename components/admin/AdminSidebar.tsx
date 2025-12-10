@@ -30,7 +30,7 @@ export function AdminSidebar() {
       <nav className="p-4 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.path === "/admin" ? pathname === "/admin" : pathname.startsWith(item.path);
+          const isActive = item.path === "/admin" ? pathname === "/admin" : pathname?.startsWith(item.path) ?? false;
 
           return (
             <Link

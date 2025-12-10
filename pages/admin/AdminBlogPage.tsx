@@ -183,3 +183,5 @@ export function AdminBlogPage() {
     </AdminLayout>
   );
 }
+
+export default AdminBlogPage;

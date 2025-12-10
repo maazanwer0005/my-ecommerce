@@ -330,3 +330,5 @@ export function AdminContactMessagesPage() {
     </AdminLayout>
   );
 }
+
+export default AdminContactMessagesPage;

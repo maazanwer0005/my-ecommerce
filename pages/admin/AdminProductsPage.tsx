@@ -213,3 +213,5 @@ export function AdminProductsPage() {
     </AdminLayout>
   );
 }
+
+export default AdminProductsPage;

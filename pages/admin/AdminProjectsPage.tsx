@@ -187,3 +187,5 @@ export function AdminProjectsPage() {
     </AdminLayout>
   );
 }
+
+export default AdminProjectsPage;

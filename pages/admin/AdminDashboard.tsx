@@ -107,3 +107,5 @@ export function AdminDashboard() {
     </AdminLayout>
   );
 }
+
+export default AdminDashboard;

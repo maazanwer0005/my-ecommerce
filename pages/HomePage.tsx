@@ -1,3 +1,5 @@
+"use client";
+
 import { Hero } from "../components/Hero";
 import { BigOffers } from "../components/BigOffers";
 import { OtherOffers } from "../components/OtherOffers";
@@ -13,3 +15,5 @@ export function HomePage() {
     </>
   );
 }
+
+export default HomePage;

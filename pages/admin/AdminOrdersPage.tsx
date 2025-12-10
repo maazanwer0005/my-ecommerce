@@ -234,3 +234,5 @@ export function AdminOrdersPage() {
     </AdminLayout>
   );
 }
+
+export default AdminOrdersPage;
