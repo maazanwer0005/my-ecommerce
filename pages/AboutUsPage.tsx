@@ -248,6 +248,3 @@ export default function AboutUsPage() {
     </div>
   );
 }
-
-// Named export for App Router usage
-export { AboutUsPage };
