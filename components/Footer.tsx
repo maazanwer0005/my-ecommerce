@@ -1,0 +1,87 @@
+import { Facebook, Twitter, Linkedin, MessageSquare } from "lucide-react";
+import Link from "next/link";
+import logoImage from "../assets/77ac9b30465e2a638fe36d43d6692e10b6bf92e1.png";
+
+export function Footer() {
+  const socialLinks = [
+    { icon: Twitter, href: "#", label: "Twitter", bg: "bg-slate-700" },
+    { icon: MessageSquare, href: "#", label: "Discord", bg: "bg-slate-700" },
+    { icon: Linkedin, href: "#", label: "LinkedIn", bg: "bg-slate-700" },
+    { icon: Facebook, href: "#", label: "Facebook", bg: "bg-slate-700" },
+  ];
+
+  const companyLinks = [
+    { name: "About Us", href: "/about-us" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Terms of Service", href: "/terms-of-service" },
+  ];
+
+  return (
+    <footer className="bg-slate-900 text-white border-t border-slate-800">
+      <div className="container mx-auto px-4 py-12">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8">
+          {/* Left Side - Logo & Description */}
+          <div>
+            <h3 className="text-cyan-400 text-2xl mb-4">VYTRION</h3>
+            <p className="text-slate-400 mb-6 max-w-md leading-relaxed">
+              Your trusted company where we bring together the latest technology, the best offers and the most innovative solutions. Our mission is to keep you updated every day to bring you a smarter, more accessible and opportunity-filled future.
+            </p>
+            {/* Social Links */}
+            <div className="flex gap-3">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  className={`${social.bg} hover:bg-slate-600 p-3 rounded-lg transition-all transform hover:scale-110`}
+                  aria-label={social.label}
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side - Company Links */}
+          <div>
+            <h3 className="text-white text-lg mb-4">Company</h3>
+            <div className="flex flex-wrap gap-6">
+              {companyLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-slate-400 text-sm">
+            © 2025 VYTRION. All rights reserved.
+          </p>
+
+          {/* Feature Badges */}
+          <div className="flex flex-wrap gap-4 items-center text-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span className="text-slate-400">Secure Payments</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="text-slate-400">SSL Encrypted</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="text-slate-400">Fast Shipping</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
