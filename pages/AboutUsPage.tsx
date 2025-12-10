@@ -33,7 +33,7 @@ const stats = [
   { number: "5", label: "Years of Experience" },
 ];
 
-export function AboutUsPage() {
+export default function AboutUsPage() {
   const router = useRouter();
 
   return (
@@ -249,4 +249,5 @@ export function AboutUsPage() {
   );
 }
 
-export default AboutUsPage;
+// Named export for App Router usage
+export { AboutUsPage };
