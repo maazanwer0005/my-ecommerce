@@ -248,3 +248,5 @@ export function AboutUsPage() {
     </div>
   );
 }
+
+export default AboutUsPage;
