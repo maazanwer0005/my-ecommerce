@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Search, ChevronDown, Menu, X, LogOut, User as UserIcon, HelpCircle, ShoppingCart, MessageSquare, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { products } from "../data/products";
 import logoImage from "../assets/77ac9b30465e2a638fe36d43d6692e10b6bf92e1.png";
 
 const pages = [
@@ -26,6 +27,40 @@ export function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const desktopSearchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+
+  // Filter products based on search query
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) {
+      // Show all products when search is empty or just focused
+      return products;
+    }
+    // Filter products that match the search query (case-insensitive, partial match)
+    const query = searchQuery.toLowerCase().trim();
+    return products.filter(product =>
+      product.name.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
+
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isOutsideDesktop = desktopSearchRef.current && !desktopSearchRef.current.contains(target);
+      const isOutsideMobile = mobileSearchRef.current && !mobileSearchRef.current.contains(target);
+      
+      if (isOutsideDesktop && isOutsideMobile) {
+        setIsSearchFocused(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Mock messages
   const [messages, setMessages] = useState([
@@ -95,16 +130,66 @@ export function Header() {
             </div>
 
             {/* Search Bar - Hidden on mobile */}
-            <div className="hidden md:flex flex-1 max-w-md">
+            <div className="hidden md:flex flex-1 max-w-md" ref={desktopSearchRef}>
               <div className="relative w-full">
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
                   className="w-full px-4 py-2 pl-10 bg-slate-800 text-white rounded-full border border-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                
+                {/* Search Results Dropdown */}
+                <AnimatePresence>
+                  {isSearchFocused && filteredProducts.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full mt-2 left-0 right-0 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-50 max-h-[600px] overflow-y-auto"
+                    >
+                      <div className="py-2">
+                        {filteredProducts.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={`/product/${product.id}`}
+                            onClick={() => {
+                              setIsSearchFocused(false);
+                              setSearchQuery("");
+                            }}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-b-0"
+                          >
+                            {/* Product Image */}
+                            <div className="w-16 h-16 flex-shrink-0 bg-white rounded overflow-hidden">
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            
+                            {/* Product Info */}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-white font-bold text-sm truncate">
+                                {product.name}
+                              </h3>
+                              <p className="text-slate-400 text-xs mt-1">
+                                {product.category}
+                              </p>
+                              <p className="text-cyan-400 font-semibold text-sm mt-1">
+                                ${product.price.toFixed(2)}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -168,8 +253,16 @@ export function Header() {
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center gap-3 text-white hover:text-cyan-400 transition-colors group"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg group-hover:shadow-cyan-500/50 transition-all">
-                      {user.name[0].toUpperCase()}
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg group-hover:shadow-cyan-500/50 transition-all overflow-hidden border-2 border-cyan-400/50">
+                      {user.profilePicture ? (
+                        <img
+                          src={user.profilePicture}
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        user.name[0].toUpperCase()
+                      )}
                     </div>
                     <span className="font-medium text-sm hidden xl:block">{user.name}</span>
                     <ChevronDown className={`w-4 h-4 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
@@ -257,15 +350,65 @@ export function Header() {
 
         {/* Mobile Search Bar */}
         <div className="md:hidden mt-3">
-          <div className="relative w-full">
+          <div className="relative w-full" ref={mobileSearchRef}>
             <input
               type="text"
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
               className="w-full px-4 py-2 pl-10 bg-slate-800 text-white rounded-full border border-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            
+            {/* Mobile Search Results Dropdown */}
+            <AnimatePresence>
+              {isSearchFocused && filteredProducts.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full mt-2 left-0 right-0 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-50 max-h-[400px] overflow-y-auto"
+                >
+                  <div className="py-2">
+                    {filteredProducts.map((product) => (
+                      <Link
+                        key={product.id}
+                        href={`/product/${product.id}`}
+                        onClick={() => {
+                          setIsSearchFocused(false);
+                          setSearchQuery("");
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-b-0"
+                      >
+                        {/* Product Image */}
+                        <div className="w-16 h-16 flex-shrink-0 bg-white rounded overflow-hidden">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        {/* Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-bold text-sm truncate">
+                            {product.name}
+                          </h3>
+                          <p className="text-slate-400 text-xs mt-1">
+                            {product.category}
+                          </p>
+                          <p className="text-cyan-400 font-semibold text-sm mt-1">
+                            ${product.price.toFixed(2)}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -296,13 +439,32 @@ export function Header() {
                 {/* Mobile Messages Link */}
                 <button
                   onClick={() => {
-                    setIsMessagesOpen(true); // Ideally open a mobile-friendly view, but standard dropdown works or navigate to /messages
+                    router.push("/messages");
                     setIsMobileMenuOpen(false);
                   }}
                   className="px-3 py-2 text-white hover:bg-slate-800 hover:text-cyan-400 transition-colors rounded flex items-center justify-between"
                 >
                   Messages
                   {unreadCount > 0 && <span className="bg-cyan-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>}
+                </button>
+
+                {/* Cart Link - Mobile */}
+                <button
+                  onClick={() => {
+                    router.push("/cart");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="px-3 py-2 text-white hover:bg-slate-800 hover:text-cyan-400 transition-colors rounded flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5" />
+                    Cart
+                  </span>
+                  {totalCartItems > 0 && (
+                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                      {totalCartItems}
+                    </span>
+                  )}
                 </button>
 
                 {/* Orders - Only show when user is logged in */}

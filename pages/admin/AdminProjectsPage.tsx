@@ -3,6 +3,8 @@
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
+import { ConfirmationModal } from "../../components/admin/ConfirmationModal";
+import { SuccessModal } from "../../components/admin/SuccessModal";
 import { Edit, Trash2, Plus, X } from "lucide-react";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
 import { Cpu, Code, Globe, Shield, Smartphone, Headphones } from "lucide-react";
@@ -110,7 +112,11 @@ export function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(() => {
     return initializeAdminProjects();
   });
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
@@ -178,7 +184,7 @@ export function AdminProjectsPage() {
 
   const handleSave = () => {
     if (!formData.title.trim() || !formData.description.trim() || !formData.client.trim() || !formData.image.trim()) {
-      alert("Please fill all required fields (Title, Description, Client, Image)!");
+      setShowValidationModal(true);
       return;
     }
 
@@ -200,7 +206,8 @@ export function AdminProjectsPage() {
             }
           : p
       ));
-      alert("Project updated successfully!");
+      setSuccessMessage("Project updated successfully!");
+      setShowSuccessModal(true);
     } else {
       // Add new project
       const newProject: Project = {
@@ -210,35 +217,57 @@ export function AdminProjectsPage() {
         date: `${formData.year}-01-01`
       };
       setProjects([newProject, ...projects]);
-      alert("Project added successfully!");
+      setSuccessMessage("Project added successfully!");
+      setShowSuccessModal(true);
     }
     setShowEditModal(false);
     setImagePreview("");
   };
 
+  const handleDeleteClick = (id: number) => {
+    setProjectToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (projectToDelete) {
+      setProjects(projects.filter(p => p.id !== projectToDelete));
+      setProjectToDelete(null);
+      setSuccessMessage("Project deleted successfully!");
+      setShowSuccessModal(true);
+    }
+  };
+
   return (
     <AdminLayout>
       <div>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-white text-3xl mb-2">Manage Projects</h1>
-            <p className="text-slate-400">{projects.length} projects</p>
+            <h1 className="text-white text-2xl sm:text-3xl mb-2">Manage Projects</h1>
+            <p className="text-slate-400 text-sm sm:text-base">{projects.length} projects</p>
           </div>
           <button 
             onClick={handleAddNew}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap"
           >
-            <Plus className="w-5 h-5" />
-            Add New Project
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Add New Project</span>
+            <span className="xs:hidden">Add Project</span>
           </button>
         </div>
 
         <div className="space-y-4">
           {projects.map((project, index) => (
-            <motion.div key={project.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }} className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-              <div className="flex items-start gap-4">
+            <motion.div 
+              key={project.id} 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.3, delay: index * 0.05 }} 
+              className="bg-slate-800 rounded-lg overflow-hidden border border-slate-700 hover:border-slate-600 transition-colors"
+            >
+              <div className="flex items-start gap-4 p-4">
                 {/* Project Image */}
-                <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
+                <div className="w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0 overflow-hidden rounded-lg bg-slate-700">
                   <ImageWithFallback
                     src={project.image}
                     alt={project.title}
@@ -247,47 +276,58 @@ export function AdminProjectsPage() {
                 </div>
                 
                 {/* Project Content */}
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-white text-xl">{project.title}</h3>
-                        <span className={`px-3 py-1 border rounded-full text-sm ${getStatusColor(project.status)}`}>{project.status}</span>
-                      </div>
-                      <p className="text-slate-400 mb-3 line-clamp-2">{project.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500 mb-3">
-                        <span>Client: {project.client}</span>
-                        <span>•</span>
-                        <span>Year: {project.year}</span>
-                      </div>
-                      {project.features && project.features.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {project.features.slice(0, 4).map((feature, i) => (
-                            <span key={i} className="bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs">
-                              {feature}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                <div className="flex-1 min-w-0 flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {/* Title and Status */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-white text-lg sm:text-xl font-semibold">{project.title}</h3>
+                      <span className={`px-2.5 py-1 border rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                        {project.status}
+                      </span>
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <button 
-                        onClick={() => handleEdit(project)}
-                        className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg transition-all"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      {deleteConfirm === project.id ? (
-                        <>
-                          <button onClick={() => setProjects(projects.filter(p => p.id !== project.id))} className="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg transition-all text-sm">Confirm</button>
-                          <button onClick={() => setDeleteConfirm(null)} className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-3 rounded-lg transition-all text-sm">Cancel</button>
-                        </>
-                      ) : (
-                        <button onClick={() => setDeleteConfirm(project.id)} className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg transition-all">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
+                    
+                    {/* Description */}
+                    <p className="text-slate-400 mb-3 text-sm sm:text-base leading-relaxed">
+                      {project.description}
+                    </p>
+                    
+                    {/* Client & Year */}
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 mb-3">
+                      <span>Client: {project.client}</span>
+                      <span>•</span>
+                      <span>{project.year}</span>
                     </div>
+                    
+                    {/* Feature Tags */}
+                    {project.features && project.features.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {project.features.slice(0, 4).map((feature, i) => (
+                          <span key={i} className="bg-slate-700/70 text-slate-300 px-3 py-1 rounded-md text-xs border border-slate-600">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button 
+                      onClick={() => handleEdit(project)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white w-10 h-10 rounded-lg transition-all flex items-center justify-center flex-shrink-0"
+                      aria-label="Edit"
+                      title="Edit"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteClick(project.id)} 
+                      className="bg-red-500 hover:bg-red-600 text-white w-10 h-10 rounded-lg transition-all flex items-center justify-center flex-shrink-0"
+                      aria-label="Delete"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -299,9 +339,9 @@ export function AdminProjectsPage() {
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-slate-700">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-white text-2xl">{editingProject ? "Edit Project" : "Add New Project"}</h2>
+          <div className="bg-slate-800 rounded-xl p-4 sm:p-6 lg:p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-slate-700">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-white text-lg sm:text-xl lg:text-2xl">{editingProject ? "Edit Project" : "Add New Project"}</h2>
               <button onClick={() => {
                 setShowEditModal(false);
                 setImagePreview("");
@@ -412,10 +452,10 @@ export function AdminProjectsPage() {
                 <p className="text-slate-500 text-xs mt-1">Separate multiple features with commas</p>
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-6">
               <button
                 onClick={handleSave}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex-1"
+                className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all flex-1 text-sm sm:text-base"
               >
                 {editingProject ? "Update" : "Add"} Project
               </button>
@@ -424,7 +464,7 @@ export function AdminProjectsPage() {
                   setShowEditModal(false);
                   setImagePreview("");
                 }}
-                className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg transition-all"
+                className="bg-slate-700 hover:bg-slate-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base"
               >
                 Cancel
               </button>
@@ -432,6 +472,41 @@ export function AdminProjectsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setProjectToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Project"
+        message="Are you sure you want to delete this project? This action cannot be undone."
+        type="danger"
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+      />
+
+      {/* Validation Modal */}
+      <ConfirmationModal
+        isOpen={showValidationModal}
+        onClose={() => setShowValidationModal(false)}
+        onConfirm={() => setShowValidationModal(false)}
+        title="Validation Error"
+        message="Please fill all required fields (Title, Description, Client, Image)!"
+        type="warning"
+        confirmText="OK"
+        cancelText="Close"
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Success"
+        message={successMessage}
+      />
     </AdminLayout>
   );
 }

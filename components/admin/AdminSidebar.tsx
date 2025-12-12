@@ -22,31 +22,45 @@ const navItems = [
   { name: "Messages", path: "/admin/contact-messages", icon: Mail },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  onItemClick?: () => void;
+  isMobile?: boolean;
+}
+
+export function AdminSidebar({ onItemClick, isMobile = false }: AdminSidebarProps) {
   const pathname = usePathname();
+
+  const sidebarContent = (
+    <nav className="p-4 space-y-2">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = item.path === "/admin" ? pathname === "/admin" : pathname?.startsWith(item.path) ?? false;
+
+        return (
+          <Link
+            key={item.path}
+            href={item.path}
+            onClick={onItemClick}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+              ? "bg-cyan-500 text-white"
+              : "text-slate-300 hover:bg-slate-700 hover:text-white"
+              }`}
+          >
+            <Icon className="w-5 h-5" />
+            <span>{item.name}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
+  if (isMobile) {
+    return sidebarContent;
+  }
 
   return (
     <aside className="w-64 bg-slate-800 border-r border-slate-700 min-h-[calc(100vh-73px)] hidden lg:block">
-      <nav className="p-4 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = item.path === "/admin" ? pathname === "/admin" : pathname?.startsWith(item.path) ?? false;
-
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                ? "bg-cyan-500 text-white"
-                : "text-slate-300 hover:bg-slate-700 hover:text-white"
-                }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {sidebarContent}
     </aside>
   );
 }

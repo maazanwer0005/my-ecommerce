@@ -3,6 +3,8 @@
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
+import { ConfirmationModal } from "../../components/admin/ConfirmationModal";
+import { SuccessModal } from "../../components/admin/SuccessModal";
 import { Edit, Trash2, Plus, X } from "lucide-react";
 import { blogPosts, featuredPost } from "../../components/data/blogPosts";
 import { ImageWithFallback } from "../../components/figma/ImageWithFallback";
@@ -45,8 +47,12 @@ export function AdminBlogPage() {
   const [blogs, setBlogs] = useState<BlogPost[]>(() => {
     return initializeAdminBlogs();
   });
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [blogToDelete, setBlogToDelete] = useState<number | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -113,7 +119,7 @@ export function AdminBlogPage() {
 
   const handleSave = () => {
     if (!formData.title.trim() || !formData.excerpt.trim() || !formData.category.trim() || !formData.image.trim()) {
-      alert("Please fill all required fields (Title, Excerpt, Category, Image)!");
+      setShowValidationModal(true);
       return;
     }
 
@@ -128,7 +134,8 @@ export function AdminBlogPage() {
             }
           : b
       ));
-      alert("Blog post updated successfully!");
+      setSuccessMessage("Blog post updated successfully!");
+      setShowSuccessModal(true);
     } else {
       // Add new blog
       const newBlog: BlogPost = {
@@ -141,35 +148,49 @@ export function AdminBlogPage() {
         })
       };
       setBlogs([newBlog, ...blogs]);
-      alert("Blog post added successfully!");
+      setSuccessMessage("Blog post added successfully!");
+      setShowSuccessModal(true);
     }
     setShowEditModal(false);
     setImagePreview("");
   };
 
+  const handleDeleteClick = (id: number) => {
+    setBlogToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (blogToDelete) {
+      setBlogs(blogs.filter(b => b.id !== blogToDelete));
+      setBlogToDelete(null);
+      setSuccessMessage("Blog post deleted successfully!");
+      setShowSuccessModal(true);
+    }
+  };
+
   return (
-    <AdminLayout>
+    <AdminLayout onAddNewPost={handleAddNew}>
       <div>
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-white text-3xl mb-2">Manage Blog</h1>
-            <p className="text-slate-400">{blogs.length} blog posts</p>
-          </div>
-          <button
-            onClick={handleAddNew}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Add New Post
-          </button>
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-white text-2xl sm:text-3xl font-bold mb-1">Manage Blog</h1>
+          <p className="text-slate-400 text-sm sm:text-base">{blogs.length} blog posts</p>
         </div>
 
+        {/* Blog Posts List */}
         <div className="space-y-4">
           {blogs.map((blog, index) => (
-            <motion.div key={blog.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }} className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-              <div className="flex items-start gap-4">
-                {/* Blog Image */}
-                <div className="w-48 h-32 flex-shrink-0 overflow-hidden">
+            <motion.div 
+              key={blog.id} 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.3, delay: index * 0.05 }} 
+              className="bg-slate-800 rounded-lg overflow-hidden border border-slate-700 hover:border-slate-600 transition-colors"
+            >
+              <div className="flex items-start gap-4 p-4">
+                {/* Blog Image Thumbnail */}
+                <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 overflow-hidden rounded-lg bg-slate-700">
                   <ImageWithFallback
                     src={blog.image}
                     alt={blog.title}
@@ -178,43 +199,45 @@ export function AdminBlogPage() {
                 </div>
                 
                 {/* Blog Content */}
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="text-white text-xl mb-2">{blog.title}</h3>
-                      <p className="text-slate-400 mb-3 line-clamp-2">{blog.excerpt}</p>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <span>By {blog.author}</span>
-                        <span>•</span>
-                        <span>{blog.date}</span>
-                        <span>•</span>
-                        <span className="text-cyan-400">{blog.category}</span>
-                        {blog.readTime && (
-                          <>
-                            <span>•</span>
-                            <span>{blog.readTime}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => handleEdit(blog)}
-                        className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg transition-all"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </button>
-                      {deleteConfirm === blog.id ? (
-                        <>
-                          <button onClick={() => setBlogs(blogs.filter(b => b.id !== blog.id))} className="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg transition-all text-sm">Confirm</button>
-                          <button onClick={() => setDeleteConfirm(null)} className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-3 rounded-lg transition-all text-sm">Cancel</button>
-                        </>
-                      ) : (
-                        <button onClick={() => setDeleteConfirm(blog.id)} className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-lg transition-all">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                <div className="flex-1 min-w-0 flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {/* Title */}
+                    <h3 className="text-white text-base sm:text-lg font-bold mb-2 line-clamp-1">{blog.title}</h3>
+                    
+                    {/* Excerpt */}
+                    <p className="text-slate-400 text-sm mb-3 line-clamp-2">{blog.excerpt}</p>
+                    
+                    {/* Meta Info */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-slate-500">
+                      <span>By {blog.author}</span>
+                      <span>{blog.date}</span>
+                      <span className="inline-block px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/30">
+                        {blog.category}
+                      </span>
+                      {blog.readTime && (
+                        <span>{blog.readTime}</span>
                       )}
                     </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => handleEdit(blog)}
+                      className="bg-orange-500 hover:bg-orange-600 text-white w-9 h-9 sm:w-10 sm:h-10 rounded transition-all flex items-center justify-center flex-shrink-0"
+                      aria-label="Edit"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteClick(blog.id)} 
+                      className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 sm:w-10 sm:h-10 rounded transition-all flex items-center justify-center flex-shrink-0"
+                      aria-label="Delete"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -225,9 +248,9 @@ export function AdminBlogPage() {
         {/* Edit Modal */}
         {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-800 rounded-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-slate-700">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white text-2xl">{editingBlog ? "Edit Blog Post" : "Add New Blog Post"}</h2>
+            <div className="bg-slate-800 rounded-xl p-4 sm:p-6 lg:p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-slate-700">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-white text-lg sm:text-xl lg:text-2xl">{editingBlog ? "Edit Blog Post" : "Add New Blog Post"}</h2>
                 <button onClick={() => {
                   setShowEditModal(false);
                   setImagePreview("");
@@ -335,10 +358,10 @@ export function AdminBlogPage() {
                   />
                 </div>
               </div>
-              <div className="flex gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-6">
                 <button
                   onClick={handleSave}
-                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex-1"
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all flex-1 text-sm sm:text-base"
                 >
                   {editingBlog ? "Update" : "Add"} Blog Post
                 </button>
@@ -347,7 +370,7 @@ export function AdminBlogPage() {
                     setShowEditModal(false);
                     setImagePreview("");
                   }}
-                  className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg transition-all"
+                  className="bg-slate-700 hover:bg-slate-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base"
                 >
                   Cancel
                 </button>
@@ -355,6 +378,41 @@ export function AdminBlogPage() {
             </div>
           </div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setBlogToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Blog Post"
+          message="Are you sure you want to delete this blog post? This action cannot be undone."
+          type="danger"
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+        />
+
+        {/* Validation Modal */}
+        <ConfirmationModal
+          isOpen={showValidationModal}
+          onClose={() => setShowValidationModal(false)}
+          onConfirm={() => setShowValidationModal(false)}
+          title="Validation Error"
+          message="Please fill all required fields (Title, Excerpt, Category, Image)!"
+          type="warning"
+          confirmText="OK"
+          cancelText="Close"
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="Success"
+          message={successMessage}
+        />
       </div>
     </AdminLayout>
   );

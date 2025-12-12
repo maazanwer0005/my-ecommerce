@@ -4,6 +4,8 @@ import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminLayout } from "../../components/admin/AdminLayout";
+import { ConfirmationModal } from "../../components/admin/ConfirmationModal";
+import { SuccessModal } from "../../components/admin/SuccessModal";
 import { Edit, Trash2, Plus, ChevronDown } from "lucide-react";
 import { products as userProducts } from "@/data/products";
 
@@ -58,6 +60,10 @@ export function AdminProductsPage() {
     return initializeAdminProducts();
   });
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<number | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [sortBy, setSortBy] = useState("featured");
 
   // Sync with user products on mount to ensure exact same products as user
@@ -68,11 +74,19 @@ export function AdminProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDelete = (id: number) => {
-    const updatedProducts = products.filter((p: Product) => p.id !== id);
-    setProducts(updatedProducts);
-    setDeleteConfirm(null);
-    alert(`Product deleted successfully!`);
+  const handleDeleteClick = (id: number) => {
+    setProductToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (productToDelete) {
+      const updatedProducts = products.filter((p: Product) => p.id !== productToDelete);
+      setProducts(updatedProducts);
+      setProductToDelete(null);
+      setSuccessMessage("Product deleted successfully!");
+      setShowSuccessModal(true);
+    }
   };
 
   const handleEdit = (id: number) => {
@@ -96,18 +110,18 @@ export function AdminProductsPage() {
   return (
     <AdminLayout>
       <div>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-white text-3xl mb-2">Manage Products</h1>
-            <p className="text-slate-400">{products.length} total products</p>
+            <h1 className="text-white text-2xl sm:text-3xl mb-2">Manage Products</h1>
+            <p className="text-slate-400 text-sm sm:text-base">{products.length} total products</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             {/* Sort Dropdown */}
             <div className="relative">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-slate-700 border border-slate-600 text-white px-4 py-2 pr-10 rounded-lg hover:border-cyan-500 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="appearance-none bg-slate-700 border border-slate-600 text-white px-4 py-2 pr-10 rounded-lg hover:border-cyan-500 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500 w-full sm:w-auto text-sm sm:text-base"
               >
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
@@ -117,15 +131,16 @@ export function AdminProductsPage() {
             </div>
             <button
               onClick={() => router.push("/admin/products/add")}
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2 shadow-lg"
+              className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base whitespace-nowrap"
             >
-              <Plus className="w-5 h-5" />
-              Add New Product
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden xs:inline">Add New Product</span>
+              <span className="xs:hidden">Add Product</span>
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {sortedProducts.map((product, index) => (
             <motion.div
               key={product.id}
@@ -138,7 +153,7 @@ export function AdminProductsPage() {
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-40 sm:h-48 object-cover"
                 />
                 {product.bigOffer && (
                   <span className="absolute top-3 right-3 bg-red-500 text-white text-xs px-3 py-1 rounded-full">
@@ -151,55 +166,61 @@ export function AdminProductsPage() {
                   </span>
                 )}
               </div>
-              <div className="p-5">
-                <h3 className="text-white text-lg mb-1">{product.name}</h3>
-                <p className="text-slate-400 text-sm mb-2 line-clamp-2">{product.description}</p>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-cyan-400">${product.price}</p>
-                  <p className="text-slate-500 text-sm">{product.category}</p>
+              <div className="p-4 sm:p-5">
+                <h3 className="text-white text-base sm:text-lg mb-1 line-clamp-1">{product.name}</h3>
+                <p className="text-slate-400 text-xs sm:text-sm mb-2 line-clamp-2">{product.description}</p>
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <p className="text-cyan-400 text-sm sm:text-base">${product.price}</p>
+                  <p className="text-slate-500 text-xs sm:text-sm">{product.category}</p>
                 </div>
                 {product.discount > 0 && (
-                  <p className="text-orange-400 text-sm mb-3">Discount: {product.discount}%</p>
+                  <p className="text-orange-400 text-xs sm:text-sm mb-3">Discount: {product.discount}%</p>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => handleEdit(product.id)}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
                   >
                     <Edit className="w-4 h-4" />
                     Edit
                   </button>
-                  {deleteConfirm === product.id ? (
-                    <>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all text-sm"
-                      >
-                        Confirm
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(null)}
-                        className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-all text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => setDeleteConfirm(product.id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleDeleteClick(product.id)}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setProductToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Product"
+        message={`Are you sure you want to delete this product? This action cannot be undone.`}
+        type="danger"
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Success"
+        message={successMessage}
+      />
     </AdminLayout>
   );
 }

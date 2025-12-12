@@ -163,34 +163,34 @@ export function AdminOrdersPage() {
   return (
     <AdminLayout>
       <div>
-        <div className="mb-8">
-          <h1 className="text-white text-3xl mb-2">Manage Orders</h1>
-          <p className="text-slate-400">{orders.length} total orders</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-white text-2xl sm:text-3xl mb-2">Manage Orders</h1>
+          <p className="text-slate-400 text-sm sm:text-base">{orders.length} total orders</p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {orders.map((order, index) => (
             <motion.div
               key={order.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-slate-800 rounded-xl p-6 border border-slate-700"
+              className="bg-slate-800 rounded-xl p-4 sm:p-6 border border-slate-700"
             >
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
                 {/* Order Info */}
                 <div className="md:col-span-2">
-                  <h3 className="text-white text-lg mb-1">{order.orderNumber}</h3>
-                  <p className="text-slate-400 text-sm">{order.customerName}</p>
-                  <p className="text-slate-500 text-sm">{order.customerEmail}</p>
-                  <p className="text-slate-500 text-sm mt-2">Date: {order.orderDate}</p>
+                  <h3 className="text-white text-base sm:text-lg mb-1">{order.orderNumber}</h3>
+                  <p className="text-slate-400 text-xs sm:text-sm">{order.customerName}</p>
+                  <p className="text-slate-500 text-xs sm:text-sm break-all">{order.customerEmail}</p>
+                  <p className="text-slate-500 text-xs sm:text-sm mt-2">Date: {order.orderDate}</p>
                 </div>
 
                 {/* Products */}
                 <div>
-                  <p className="text-slate-300 text-sm mb-1">Products:</p>
+                  <p className="text-slate-300 text-xs sm:text-sm mb-1">Products:</p>
                   {order.products.map((product, idx) => (
-                    <p key={idx} className="text-slate-400 text-sm">
+                    <p key={idx} className="text-slate-400 text-xs sm:text-sm">
                       {product.name} x{product.quantity}
                     </p>
                   ))}
@@ -198,16 +198,16 @@ export function AdminOrdersPage() {
 
                 {/* Amount */}
                 <div>
-                  <p className="text-slate-300 text-sm mb-1">Total Amount:</p>
-                  <p className="text-cyan-400 text-lg">${order.totalAmount.toFixed(2)}</p>
+                  <p className="text-slate-300 text-xs sm:text-sm mb-1">Total Amount:</p>
+                  <p className="text-cyan-400 text-base sm:text-lg">${order.totalAmount.toFixed(2)}</p>
                 </div>
 
                 {/* Status & Actions */}
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <select
                     value={order.status}
                     onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-700 ${getStatusColor(order.status)}`}
+                    className={`w-full px-3 py-2 border rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-700 ${getStatusColor(order.status)}`}
                   >
                     <option value="pending">Pending</option>
                     <option value="processed">Processed</option>
@@ -217,9 +217,9 @@ export function AdminOrdersPage() {
 
                   <button
                     onClick={() => setSelectedOrder(order)}
-                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm"
+                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-xs sm:text-sm"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                     View Details
                   </button>
                 </div>
@@ -234,10 +234,10 @@ export function AdminOrdersPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-slate-800 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700"
+              className="bg-slate-800 rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white text-2xl">Order Details</h2>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-white text-xl sm:text-2xl">Order Details</h2>
                 <button
                   onClick={() => setSelectedOrder(null)}
                   className="text-slate-400 hover:text-white transition-colors"
@@ -295,7 +295,7 @@ export function AdminOrdersPage() {
 
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg transition-all"
+                className="mt-4 sm:mt-6 w-full bg-slate-700 hover:bg-slate-600 text-white py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base"
               >
                 Close
               </button>

@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateUser: (updates: { name?: string; email?: string; profilePicture?: string }) => void;
   isLoading: boolean;
   isAdmin: () => boolean;
 }
@@ -105,12 +106,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user");
   };
 
+  const updateUser = (updates: { name?: string; email?: string; profilePicture?: string }) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+  };
+
   const isAdmin = () => {
     return user?.isAdmin === true;
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAdmin }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateUser, isLoading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
@@ -126,6 +135,7 @@ export function useAuth() {
         login: async () => false,
         register: async () => false,
         logout: () => {},
+        updateUser: () => {},
         isLoading: false,
         isAdmin: () => false,
       };

@@ -73,13 +73,13 @@ export function AdminDashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <h1 className="text-white text-4xl mb-2">Dashboard</h1>
-          <p className="text-slate-400">Welcome to the admin panel</p>
+          <h1 className="text-white text-2xl sm:text-3xl lg:text-4xl mb-2">Dashboard</h1>
+          <p className="text-slate-400 text-sm sm:text-base">Welcome to the admin panel</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {dashboardCards.map((card, index) => {
             const Icon = card.icon;
             return (
@@ -89,16 +89,16 @@ export function AdminDashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 onClick={() => router.push(card.path)}
-                className="bg-slate-800 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all cursor-pointer group border border-slate-700 hover:border-cyan-500"
+                className="bg-slate-800 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-2xl transition-all cursor-pointer group border border-slate-700 hover:border-cyan-500"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-14 h-14 bg-gradient-to-br ${card.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-7 h-7 text-white" />
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br ${card.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                   </div>
-                  <span className="text-slate-400 text-2xl">{card.count}</span>
+                  <span className="text-slate-400 text-xl sm:text-2xl">{card.count}</span>
                 </div>
-                <h3 className="text-white text-xl mb-2">{card.title}</h3>
-                <p className="text-slate-400 text-sm">{card.description}</p>
+                <h3 className="text-white text-lg sm:text-xl mb-2">{card.title}</h3>
+                <p className="text-slate-400 text-xs sm:text-sm">{card.description}</p>
               </motion.div>
             );
           })}

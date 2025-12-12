@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import React from "react";
 import { useRouter, useParams } from "next/navigation";
 import { AdminLayout } from "../../components/admin/AdminLayout";
+import { ConfirmationModal } from "../../components/admin/ConfirmationModal";
+import { SuccessModal } from "../../components/admin/SuccessModal";
 import { ArrowLeft, Upload, Package, X } from "lucide-react";
 
 // Product type definition
@@ -43,6 +45,10 @@ export function AdminAddProductPage() {
 
   const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load product data when editing
@@ -79,8 +85,9 @@ export function AdminAddProductPage() {
         }
       } else {
         console.error(`Product with ID ${productId} not found`);
-        alert(`Product with ID ${productId} not found. Redirecting to products page.`);
-        router.push('/admin/products');
+        setErrorMessage(`Product with ID ${productId} not found. Redirecting to products page.`);
+        setShowErrorModal(true);
+        setTimeout(() => router.push('/admin/products'), 2000);
       }
     }
   }, [isEdit, id, router]);
@@ -121,8 +128,9 @@ export function AdminAddProductPage() {
       const existingProduct = existingProducts.find((p: Product) => p.id === productId);
       
       if (!existingProduct) {
-        alert(`Product with ID ${productId} not found. Please try again.`);
-        router.push('/admin/products');
+        setErrorMessage(`Product with ID ${productId} not found. Please try again.`);
+        setShowErrorModal(true);
+        setTimeout(() => router.push('/admin/products'), 2000);
         return;
       }
       
@@ -148,7 +156,8 @@ export function AdminAddProductPage() {
           : p
       );
       localStorage.setItem('adminProducts', JSON.stringify(updatedProducts));
-      alert("Product updated successfully!");
+      setSuccessMessage("Product updated successfully!");
+      setShowSuccessModal(true);
     } else {
       // Add new product
       const newId = existingProducts.length > 0 
@@ -174,7 +183,8 @@ export function AdminAddProductPage() {
 
       const updatedProducts = [...existingProducts, newProduct];
       localStorage.setItem('adminProducts', JSON.stringify(updatedProducts));
-      alert("Product added successfully!");
+      setSuccessMessage("Product added successfully!");
+      setShowSuccessModal(true);
     }
 
     router.push("/admin/products");
@@ -192,13 +202,15 @@ export function AdminAddProductPage() {
       
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+        setErrorMessage('Please select an image file');
+        setShowErrorModal(true);
         return;
       }
       
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
+        setErrorMessage('Image size should be less than 5MB');
+        setShowErrorModal(true);
         return;
       }
       
@@ -209,7 +221,8 @@ export function AdminAddProductPage() {
         setImages([...images, imageUrl]);
       };
       reader.onerror = () => {
-        alert('Error reading file. Please try again.');
+        setErrorMessage('Error reading file. Please try again.');
+        setShowErrorModal(true);
       };
       reader.readAsDataURL(file);
     }
@@ -228,63 +241,63 @@ export function AdminAddProductPage() {
 
   return (
     <AdminLayout>
-      <div className="max-w-5xl">
-        <div className="flex items-center gap-4 mb-8">
+      <div className="max-w-5xl w-full">
+        <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           <button
             onClick={() => router.push("/admin/products")}
-            className="text-slate-400 hover:text-white transition-colors bg-slate-800 p-2 rounded-lg border border-slate-700"
+            className="text-slate-400 hover:text-white transition-colors bg-slate-800 p-2 rounded-lg border border-slate-700 flex-shrink-0"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-          <div>
-            <h1 className="text-white text-3xl">
+          <div className="min-w-0">
+            <h1 className="text-white text-xl sm:text-2xl lg:text-3xl">
               {isEdit ? "Edit Product" : "Add New Product"}
             </h1>
-            <p className="text-slate-400">Fill in the product details below</p>
+            <p className="text-slate-400 text-sm sm:text-base">Fill in the product details below</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Basic Information */}
-          <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-            <h2 className="text-white text-xl mb-4">Basic Information</h2>
+          <div className="bg-slate-800 rounded-xl p-4 sm:p-6 border border-slate-700">
+            <h2 className="text-white text-lg sm:text-xl mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-slate-300 text-sm mb-2 block">Product Name *</label>
+                <label className="text-slate-300 text-xs sm:text-sm mb-2 block">Product Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter product name"
-                  className={`w-full px-4 py-3 bg-slate-700 border ${errors.name ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500`}
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-700 border ${errors.name ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base`}
                 />
                 {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
               </div>
               <div>
-                <label className="text-slate-300 text-sm mb-2 block">Category *</label>
+                <label className="text-slate-300 text-xs sm:text-sm mb-2 block">Category *</label>
                 <input
                   type="text"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   placeholder="e.g., Electronics, Home & Kitchen"
-                  className={`w-full px-4 py-3 bg-slate-700 border ${errors.category ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500`}
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-700 border ${errors.category ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base`}
                 />
                 {errors.category && <p className="text-red-400 text-xs mt-1">{errors.category}</p>}
               </div>
               <div>
-                <label className="text-slate-300 text-sm mb-2 block">Price ($) *</label>
+                <label className="text-slate-300 text-xs sm:text-sm mb-2 block">Price ($) *</label>
                 <input
                   type="number"
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   placeholder="0.00"
-                  className={`w-full px-4 py-3 bg-slate-700 border ${errors.price ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500`}
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-700 border ${errors.price ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base`}
                 />
                 {errors.price && <p className="text-red-400 text-xs mt-1">{errors.price}</p>}
               </div>
               <div>
-                <label className="text-slate-300 text-sm mb-2 block">Discount (%)</label>
+                <label className="text-slate-300 text-xs sm:text-sm mb-2 block">Discount (%)</label>
                 <input
                   type="number"
                   value={formData.discount}
@@ -292,19 +305,19 @@ export function AdminAddProductPage() {
                   placeholder="0"
                   min="0"
                   max="100"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base"
                 />
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="text-slate-300 text-sm mb-2 block">Description *</label>
+              <label className="text-slate-300 text-xs sm:text-sm mb-2 block">Description *</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Enter product description"
                 rows={4}
-                className={`w-full px-4 py-3 bg-slate-700 border ${errors.description ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500`}
+                className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-slate-700 border ${errors.description ? 'border-red-500' : 'border-slate-600'} text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-sm sm:text-base`}
               />
               {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description}</p>}
             </div>
@@ -324,8 +337,8 @@ export function AdminAddProductPage() {
           </div>
 
           {/* Images */}
-          <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-            <h2 className="text-white text-xl mb-4">Product Images</h2>
+          <div className="bg-slate-800 rounded-xl p-4 sm:p-6 border border-slate-700">
+            <h2 className="text-white text-lg sm:text-xl mb-4">Product Images</h2>
             <input
               type="file"
               ref={fileInputRef}
@@ -336,13 +349,13 @@ export function AdminAddProductPage() {
             <button
               type="button"
               onClick={handleImageAdd}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2"
+              className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              <Upload className="w-5 h-5" />
+              <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
               Add Image
             </button>
             {images.length > 0 && (
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                 {images.map((img, index) => (
                   <div key={index} className="relative group">
                     <img src={img} alt={`Product ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
@@ -360,10 +373,10 @@ export function AdminAddProductPage() {
           </div>
 
           {/* Product Type */}
-          <div className="bg-gradient-to-br from-green-900/30 to-teal-900/30 border border-green-500/30 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-green-900/30 to-teal-900/30 border border-green-500/30 rounded-xl p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Package className="w-6 h-6 text-green-400" />
-              <h2 className="text-white text-xl">Product Type</h2>
+              <Package className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
+              <h2 className="text-white text-lg sm:text-xl">Product Type</h2>
             </div>
 
             <div className="mb-4">
@@ -412,10 +425,10 @@ export function AdminAddProductPage() {
           </div>
 
           {/* Supplier Integration */}
-          <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/30 rounded-xl p-6">
+          <div className="bg-gradient-to-br from-blue-900/30 to-indigo-900/30 border border-blue-500/30 rounded-xl p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-blue-400 text-xl">🔗</span>
-              <h2 className="text-white text-xl">Supplier Integration</h2>
+              <span className="text-blue-400 text-lg sm:text-xl">🔗</span>
+              <h2 className="text-white text-lg sm:text-xl">Supplier Integration</h2>
             </div>
 
             <div className="mb-4">
@@ -464,23 +477,46 @@ export function AdminAddProductPage() {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => router.push("/admin/products")}
-              className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-all border border-slate-600"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-all border border-slate-600 text-sm sm:text-base"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg transition-all shadow-lg"
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 sm:py-3 rounded-lg transition-all shadow-lg text-sm sm:text-base"
             >
               {isEdit ? "Update Product" : "Add Product"}
             </button>
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          router.push('/admin/products');
+        }}
+        title="Success"
+        message={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        onConfirm={() => setShowErrorModal(false)}
+        title="Error"
+        message={errorMessage}
+        type="danger"
+        confirmText="OK"
+        cancelText="Close"
+      />
     </AdminLayout>
   );
 }

@@ -3,6 +3,8 @@
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
+import { ConfirmationModal } from "../../components/admin/ConfirmationModal";
+import { SuccessModal } from "../../components/admin/SuccessModal";
 import { Edit, Trash2, Plus, X } from "lucide-react";
 import { Cpu, Code, Globe, Headphones, Shield, Smartphone, Zap, Rocket, Settings, Database, Server, Cloud, Lock, Monitor, Wifi, Mail, Phone, MessageSquare, FileText, Briefcase, Target, TrendingUp, Users, Award, Star } from "lucide-react";
 
@@ -121,7 +123,11 @@ export function AdminServicesPage() {
   const [services, setServices] = useState<Service[]>(() => {
     return initializeAdminServices();
   });
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<number | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState({
@@ -168,7 +174,7 @@ export function AdminServicesPage() {
 
   const handleSave = () => {
     if (!formData.title.trim() || !formData.description.trim()) {
-      alert("Please fill all required fields (Title, Description)!");
+      setShowValidationModal(true);
       return;
     }
 
@@ -197,7 +203,8 @@ export function AdminServicesPage() {
             }
           : s
       ));
-      alert("Service updated successfully!");
+      setSuccessMessage("Service updated successfully!");
+      setShowSuccessModal(true);
     } else {
       // Add new service
       const newService: Service = {
@@ -211,9 +218,24 @@ export function AdminServicesPage() {
         duration: formData.duration
       };
       setServices([...services, newService]);
-      alert("Service added successfully!");
+      setSuccessMessage("Service added successfully!");
+      setShowSuccessModal(true);
     }
     setShowEditModal(false);
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setServiceToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (serviceToDelete) {
+      setServices(services.filter(s => s.id !== serviceToDelete));
+      setServiceToDelete(null);
+      setSuccessMessage("Service deleted successfully!");
+      setShowSuccessModal(true);
+    }
   };
 
   const handleCancel = () => {
@@ -223,34 +245,35 @@ export function AdminServicesPage() {
   return (
     <AdminLayout>
       <div>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-white text-3xl mb-2">Manage Services</h1>
-            <p className="text-slate-400">{services.length} services</p>
+            <h1 className="text-white text-2xl sm:text-3xl mb-2">Manage Services</h1>
+            <p className="text-slate-400 text-sm sm:text-base">{services.length} services</p>
           </div>
           <button
             onClick={handleAddNew}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2"
+            className="bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap"
           >
-            <Plus className="w-5 h-5" />
-            Add New Service
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Add New Service</span>
+            <span className="xs:hidden">Add Service</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {services.map((service, index) => {
             const IconComponent = service.icon;
             return (
-              <motion.div key={service.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }} className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-                <div className="flex items-start gap-4 mb-4">
+              <motion.div key={service.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }} className="bg-slate-800 rounded-xl p-4 sm:p-6 border border-slate-700">
+                <div className="flex items-start gap-3 sm:gap-4 mb-4">
                   {IconComponent && (
-                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <IconComponent className="w-6 h-6 text-white" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   )}
-                  <div className="flex-1">
-                    <h3 className="text-white text-xl mb-2">{service.title}</h3>
-                    <p className="text-slate-400 mb-3 line-clamp-2">{service.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white text-lg sm:text-xl mb-2">{service.title}</h3>
+                    <p className="text-slate-400 mb-3 line-clamp-2 text-sm sm:text-base">{service.description}</p>
                   </div>
                 </div>
                 
@@ -275,25 +298,18 @@ export function AdminServicesPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => handleEdit(service)}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
                   >
                     <Edit className="w-4 h-4" />
                     Edit
                   </button>
-                  {deleteConfirm === service.id ? (
-                    <>
-                      <button onClick={() => setServices(services.filter(s => s.id !== service.id))} className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all">Confirm</button>
-                      <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-all">Cancel</button>
-                    </>
-                  ) : (
-                    <button onClick={() => setDeleteConfirm(service.id)} className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2">
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  )}
+                  <button onClick={() => handleDeleteClick(service.id)} className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
                 </div>
               </motion.div>
             );
@@ -302,9 +318,9 @@ export function AdminServicesPage() {
 
         {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-800 rounded-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-700">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white text-2xl">{editingService ? "Edit Service" : "Add New Service"}</h2>
+            <div className="bg-slate-800 rounded-xl p-4 sm:p-6 lg:p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-700">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-white text-lg sm:text-xl lg:text-2xl">{editingService ? "Edit Service" : "Add New Service"}</h2>
                 <button onClick={handleCancel} className="text-slate-400 hover:text-slate-300 transition-colors">
                   <X className="w-6 h-6" />
                 </button>
@@ -392,16 +408,16 @@ export function AdminServicesPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-6">
                 <button
                   onClick={handleSave}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all"
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base"
                 >
                   {editingService ? "Update" : "Add"} Service
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 px-6 py-3 rounded-lg transition-all"
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all text-sm sm:text-base"
                 >
                   Cancel
                 </button>
@@ -409,6 +425,41 @@ export function AdminServicesPage() {
             </div>
           </div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setServiceToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Service"
+          message="Are you sure you want to delete this service? This action cannot be undone."
+          type="danger"
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+        />
+
+        {/* Validation Modal */}
+        <ConfirmationModal
+          isOpen={showValidationModal}
+          onClose={() => setShowValidationModal(false)}
+          onConfirm={() => setShowValidationModal(false)}
+          title="Validation Error"
+          message="Please fill all required fields (Title, Description)!"
+          type="warning"
+          confirmText="OK"
+          cancelText="Close"
+        />
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          title="Success"
+          message={successMessage}
+        />
       </div>
     </AdminLayout>
   );
