@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { Eye, X } from "lucide-react";
 
@@ -16,61 +16,133 @@ interface Order {
   products: { name: string; quantity: number; price: number }[];
 }
 
-const initialOrders: Order[] = [
+// User orders data (same as in OrdersPage.tsx)
+interface UserOrder {
+  id: string;
+  date: string;
+  total: string;
+  status: string;
+  items: { name: string; price: string }[];
+}
+
+const userOrders: UserOrder[] = [
   {
-    id: "1",
-    orderNumber: "ORD-001",
-    customerName: "John Doe",
-    customerEmail: "john@example.com",
-    orderDate: "2025-12-01",
-    totalAmount: 2599.98,
-    status: "pending",
-    products: [
-      { name: "MacBook Pro M3 16\"", quantity: 1, price: 2249.99 },
-      { name: "Sony WH-1000XM5", quantity: 1, price: 349.99 }
-    ]
-  },
-  {
-    id: "2",
-    orderNumber: "ORD-002",
-    customerName: "Jane Smith",
-    customerEmail: "jane@example.com",
-    orderDate: "2025-12-02",
-    totalAmount: 1199.99,
-    status: "processed",
-    products: [
-      { name: "iPhone 15 Pro Max", quantity: 1, price: 1199.99 }
-    ]
-  },
-  {
-    id: "3",
-    orderNumber: "ORD-003",
-    customerName: "Bob Johnson",
-    customerEmail: "bob@example.com",
-    orderDate: "2025-12-03",
-    totalAmount: 599.99,
+    id: "#j6gg6l0",
+    date: "12/4/2025",
+    total: "$799.97",
     status: "shipped",
-    products: [
-      { name: "iPad Air 5th Gen", quantity: 1, price: 599.99 }
-    ]
+    items: [
+      { name: "Sony WH-1000XM5 Headphones (x1)", price: "$349.99" },
+      { name: "iPad Air 5th Gen (x1)", price: "$599.99" },
+    ],
   },
   {
-    id: "4",
-    orderNumber: "ORD-004",
-    customerName: "Alice Williams",
-    customerEmail: "alice@example.com",
-    orderDate: "2025-12-04",
-    totalAmount: 1871.25,
-    status: "delivered",
-    products: [
-      { name: "Peloton Bike+", quantity: 1, price: 1871.25 }
-    ]
-  }
+    id: "#op0lt14k",
+    date: "12/4/2025",
+    total: "$2699.98",
+    status: "completed",
+    items: [
+      { name: "MacBook Pro M3 16\" (x1)", price: "$2499.99" },
+    ],
+  },
+  {
+    id: "#p7xhlwt7",
+    date: "12/4/2025",
+    total: "$799.97",
+    status: "shipped",
+    items: [
+      { name: "Sony WH-1000XM5 Headphones (x1)", price: "$349.99" },
+    ],
+  },
+  {
+    id: "#k8mn2p5",
+    date: "12/3/2025",
+    total: "$1299.99",
+    status: "completed",
+    items: [
+      { name: "Samsung Galaxy S24 Ultra (x1)", price: "$1199.99" },
+      { name: "Galaxy Buds Pro (x1)", price: "$199.99" },
+    ],
+  },
+  {
+    id: "#r9qw3x7",
+    date: "12/2/2025",
+    total: "$549.98",
+    status: "shipped",
+    items: [
+      { name: "Nintendo Switch OLED (x1)", price: "$349.99" },
+      { name: "Legend of Zelda Game (x1)", price: "$59.99" },
+    ],
+  },
+  {
+    id: "#t5ab8c2",
+    date: "12/1/2025",
+    total: "$1899.97",
+    status: "completed",
+    items: [
+      { name: "LG OLED TV 55\" (x1)", price: "$1499.99" },
+      { name: "Soundbar System (x1)", price: "$399.99" },
+    ],
+  },
 ];
 
+// Convert user order format to admin order format
+const convertUserOrderToAdminOrder = (userOrder: UserOrder, index: number): Order => {
+  // Convert date from MM/DD/YYYY to YYYY-MM-DD
+  const dateParts = userOrder.date.split('/');
+  const formattedDate = `2025-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
+  
+  // Convert total from "$799.97" to 799.97
+  const totalAmount = parseFloat(userOrder.total.replace('$', '').replace(',', ''));
+  
+  // Convert status: "completed" -> "delivered", "shipped" -> "shipped"
+  const status = userOrder.status === "completed" ? "delivered" : userOrder.status;
+  
+  // Convert items to products
+  const products = userOrder.items.map(item => {
+    // Extract quantity from name like "Sony WH-1000XM5 Headphones (x1)"
+    const quantityMatch = item.name.match(/\(x(\d+)\)/);
+    const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 1;
+    
+    // Extract product name (remove quantity part)
+    const productName = item.name.replace(/\s*\(x\d+\)\s*$/, '');
+    
+    // Convert price from "$349.99" to 349.99
+    const price = parseFloat(item.price.replace('$', '').replace(',', ''));
+    
+    return { name: productName, quantity, price };
+  });
+  
+  return {
+    id: userOrder.id.replace('#', ''),
+    orderNumber: userOrder.id,
+    customerName: "Customer",
+    customerEmail: "customer@example.com",
+    orderDate: formattedDate,
+    totalAmount,
+    status,
+    products
+  };
+};
+
+// Initialize admin orders from user orders
+const initializeAdminOrders = (): Order[] => {
+  return userOrders.map((userOrder, index) => convertUserOrderToAdminOrder(userOrder, index));
+};
+
 export function AdminOrdersPage() {
-  const [orders, setOrders] = useState(initialOrders);
+  // Always use user orders - same as user page
+  const [orders, setOrders] = useState<Order[]>(() => {
+    return initializeAdminOrders();
+  });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Sync with user orders on mount to ensure exact same orders as user
+  useEffect(() => {
+    const syncedOrders = initializeAdminOrders();
+    setOrders(syncedOrders);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
     setOrders(orders.map(order =>

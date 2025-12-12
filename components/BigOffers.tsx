@@ -221,7 +221,7 @@ export function BigOffers() {
           className="text-center"
         >
           <button
-            onClick={() => router.push('/products')}
+            onClick={() => router.push('/offers')}
             className="bg-cyan-500 hover:bg-cyan-600 text-white px-8 py-3 rounded-lg transition-all transform hover:scale-105 inline-flex items-center gap-2 shadow-lg"
           >
             View All Offers

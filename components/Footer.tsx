@@ -4,10 +4,10 @@ import logoImage from "../assets/77ac9b30465e2a638fe36d43d6692e10b6bf92e1.png";
 
 export function Footer() {
   const socialLinks = [
-    { icon: Twitter, href: "#", label: "Twitter", bg: "bg-slate-700" },
-    { icon: MessageSquare, href: "#", label: "Discord", bg: "bg-slate-700" },
-    { icon: Linkedin, href: "#", label: "LinkedIn", bg: "bg-slate-700" },
-    { icon: Facebook, href: "#", label: "Facebook", bg: "bg-slate-700" },
+    { icon: Twitter, href: "https://twitter.com", label: "Twitter", bg: "bg-slate-700" },
+    { icon: MessageSquare, href: "https://messenger.com", label: "Messenger", bg: "bg-slate-700" },
+    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn", bg: "bg-slate-700" },
+    { icon: Facebook, href: "https://facebook.com", label: "Facebook", bg: "bg-slate-700" },
   ];
 
   const companyLinks = [
@@ -33,10 +33,12 @@ export function Footer() {
                 <a
                   key={social.label}
                   href={social.href}
-                  className={`${social.bg} hover:bg-slate-600 p-3 rounded-lg transition-all transform hover:scale-110`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${social.bg} hover:bg-blue-500 p-3 rounded-lg transition-all transform hover:scale-110 group`}
                   aria-label={social.label}
                 >
-                  <social.icon className="w-5 h-5" />
+                  <social.icon className="w-5 h-5 text-white group-hover:text-white transition-colors" />
                 </a>
               ))}
             </div>

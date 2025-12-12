@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { Star, Filter, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { products } from "@/components/data/products";
+import { products } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 
 export function ProductsPage() {
@@ -16,9 +16,27 @@ export function ProductsPage() {
 
   const categories = ["All", "Audio", "Wearables", "Accessories", "Gaming", "Smart Home", "Storage"];
 
-  const filteredProducts = selectedCategory === "All"
+  // Filter products by category
+  const categoryFiltered = selectedCategory === "All"
     ? products
     : products.filter(p => p.category === selectedCategory);
+
+  // Sort products based on selected sort option
+  const sortedProducts = [...categoryFiltered].sort((a, b) => {
+    switch (sortBy) {
+      case "price-low":
+        return a.price - b.price;
+      case "price-high":
+        return b.price - a.price;
+      case "rating":
+        return b.rating - a.rating;
+      case "featured":
+      default:
+        return 0; // Keep original order for featured
+    }
+  });
+
+  const filteredProducts = sortedProducts;
 
   const handleAddToCart = (e: React.MouseEvent, product: typeof products[0]) => {
     e.stopPropagation();

@@ -4,9 +4,10 @@ import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminLayout } from "../../components/admin/AdminLayout";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, ChevronDown } from "lucide-react";
+import { products as userProducts } from "@/data/products";
 
-// Product type definition
+// Product type definition for admin (compatible with user products)
 interface Product {
   id: number;
   name: string;
@@ -17,127 +18,55 @@ interface Product {
   onOffer: boolean;
   bigOffer: boolean;
   image: string;
+  rating: number;
 }
 
-// Function to get image based on product title
-const getProductImage = (productName: string): string => {
-  const name = productName.toLowerCase();
+// Convert user product format to admin format
+const convertToAdminProduct = (userProduct: typeof userProducts[0]): Product => {
+  // Extract discount percentage from string like "25% OFF"
+  const discountMatch = userProduct.discount?.match(/(\d+)/);
+  const discountPercent = discountMatch ? parseInt(discountMatch[1]) : 0;
   
-  if (name.includes("macbook") || name.includes("laptop")) {
-    return "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop";
-  }
-  if (name.includes("iphone") || name.includes("phone")) {
-    return "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop";
-  }
-  if (name.includes("sony") || name.includes("headphone") || name.includes("earphone")) {
-    return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop";
-  }
-  if (name.includes("ipad") || name.includes("tablet")) {
-    return "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=300&fit=crop";
-  }
-  if (name.includes("dyson") || name.includes("vacuum")) {
-    return "https://images.unsplash.com/photo-1556912172-45b7abe8b7e4?w=400&h=300&fit=crop";
-  }
-  if (name.includes("peloton") || name.includes("bike") || name.includes("exercise")) {
-    return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop";
-  }
+  // Determine if it's on offer and big offer
+  const onOffer = discountPercent > 0;
+  const bigOffer = discountPercent >= 25; // 25% or more = big offer
   
-  // Default image
-  return "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop";
+  return {
+    id: userProduct.id,
+    name: userProduct.name,
+    price: userProduct.price,
+    category: userProduct.category,
+    description: userProduct.description,
+    discount: discountPercent,
+    onOffer,
+    bigOffer,
+    image: userProduct.image,
+    rating: userProduct.rating || 0
+  };
 };
 
-const initialProducts = [
-  {
-    id: 1,
-    name: "MacBook Pro M3 16\"",
-    price: 2249.99,
-    category: "Electronics",
-    description: "Powerful laptop with M3 chip, 16GB RAM, 512GB SSD.",
-    discount: 10,
-    onOffer: true,
-    bigOffer: true,
-    image: getProductImage("MacBook Pro M3 16\"")
-  },
-  {
-    id: 2,
-    name: "iPhone 15 Pro Max",
-    price: 1199.99,
-    category: "Electronics",
-    description: "Latest iPhone with titanium design and A17 Pro chip.",
-    discount: 15,
-    onOffer: true,
-    bigOffer: true,
-    image: getProductImage("iPhone 15 Pro Max")
-  },
-  {
-    id: 3,
-    name: "Sony WH-1000XM5",
-    price: 349.99,
-    category: "Electronics",
-    description: "Industry-leading noise cancelling wireless headphones.",
-    discount: 15,
-    onOffer: true,
-    bigOffer: false,
-    image: getProductImage("Sony WH-1000XM5")
-  },
-  {
-    id: 4,
-    name: "iPad Air 5th Gen",
-    price: 599.99,
-    category: "Electronics",
-    description: "10.9-inch Liquid Retina display with M1 chip.",
-    discount: 0,
-    onOffer: false,
-    bigOffer: false,
-    image: getProductImage("iPad Air 5th Gen")
-  },
-  {
-    id: 5,
-    name: "Dyson V15 Vacuum",
-    price: 599.99,
-    category: "Home & Kitchen",
-    description: "Powerful cordless vacuum with laser dust detection.",
-    discount: 20,
-    onOffer: true,
-    bigOffer: true,
-    image: getProductImage("Dyson V15 Vacuum")
-  },
-  {
-    id: 6,
-    name: "Peloton Bike+",
-    price: 1871.25,
-    category: "Fitness",
-    description: "Premium indoor cycling bike with live classes.",
-    discount: 25,
-    onOffer: true,
-    bigOffer: true,
-    image: getProductImage("Peloton Bike+")
-  }
-];
+// Initialize admin products from user products
+const initializeAdminProducts = (): Product[] => {
+  return userProducts.map(convertToAdminProduct);
+};
 
 export function AdminProductsPage() {
   const router = useRouter();
+  // Always use user products directly - no localStorage merging
+  // This ensures admin always shows exact same 12 products as user
   const [products, setProducts] = useState<Product[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('adminProducts');
-      if (saved) {
-        return JSON.parse(saved) as Product[];
-      } else {
-        // Initialize with default products
-        localStorage.setItem('adminProducts', JSON.stringify(initialProducts));
-        return initialProducts;
-      }
-    }
-    return initialProducts;
+    return initializeAdminProducts();
   });
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState("featured");
 
-  // Save to localStorage whenever products change
+  // Sync with user products on mount to ensure exact same products as user
+  // Remove any products that don't match user products
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('adminProducts', JSON.stringify(products));
-    }
-  }, [products]);
+    const syncedProducts = initializeAdminProducts();
+    setProducts(syncedProducts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDelete = (id: number) => {
     const updatedProducts = products.filter((p: Product) => p.id !== id);
@@ -151,6 +80,19 @@ export function AdminProductsPage() {
     router.push(`/admin/products/edit/${id}`);
   };
 
+  // Sort products based on selected sort option
+  const sortedProducts = [...products].sort((a, b) => {
+    switch (sortBy) {
+      case "price-low":
+        return a.price - b.price;
+      case "price-high":
+        return b.price - a.price;
+      case "featured":
+      default:
+        return 0; // Keep original order for featured (no sorting)
+    }
+  });
+
   return (
     <AdminLayout>
       <div>
@@ -159,17 +101,32 @@ export function AdminProductsPage() {
             <h1 className="text-white text-3xl mb-2">Manage Products</h1>
             <p className="text-slate-400">{products.length} total products</p>
           </div>
-          <button
-            onClick={() => router.push("/admin/products/add")}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2 shadow-lg"
-          >
-            <Plus className="w-5 h-5" />
-            Add New Product
-          </button>
+          <div className="flex items-center gap-4">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-slate-700 border border-slate-600 text-white px-4 py-2 pr-10 rounded-lg hover:border-cyan-500 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                <option value="featured">Featured</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+            <button
+              onClick={() => router.push("/admin/products/add")}
+              className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all flex items-center gap-2 shadow-lg"
+            >
+              <Plus className="w-5 h-5" />
+              Add New Product
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product, index) => (
+          {sortedProducts.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 20 }}

@@ -11,7 +11,6 @@ import logoImage from "../assets/77ac9b30465e2a638fe36d43d6692e10b6bf92e1.png";
 
 const pages = [
   { name: "Products", path: "/products" },
-  { name: "Orders", path: "/orders" },
   { name: "Blog", path: "/blog" },
   { name: "Projects", path: "/projects" },
   { name: "Services", path: "/services" },
@@ -128,6 +127,16 @@ export function Header() {
                 )}
               </button>
             </div>
+
+            {/* Orders - Only show when user is logged in */}
+            {user && (
+              <button
+                onClick={() => router.push("/orders")}
+                className="text-white hover:text-cyan-400 transition-colors font-medium text-base flex items-center gap-2"
+              >
+                <span>Orders</span>
+              </button>
+            )}
 
             <button
               onClick={() => router.push("/contact")}
@@ -295,6 +304,19 @@ export function Header() {
                   Messages
                   {unreadCount > 0 && <span className="bg-cyan-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>}
                 </button>
+
+                {/* Orders - Only show when user is logged in */}
+                {user && (
+                  <button
+                    onClick={() => {
+                      router.push("/orders");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="px-3 py-2 text-white hover:bg-slate-800 hover:text-cyan-400 transition-colors rounded"
+                  >
+                    Orders
+                  </button>
+                )}
 
                 <button
                   onClick={() => {
